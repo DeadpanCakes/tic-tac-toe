@@ -27,7 +27,29 @@ const gameBoard = (() => {
         for (let i = 0; i < board.length; i++) {
             gameContainer.appendChild(cellElement.cloneNode());
             gameContainer.lastElementChild.className = "cells"
-            gameContainer.lastElementChild.id = i
+            gameContainer.lastElementChild.id = "cell" + i
+            switch(i%3) {
+                case 0:
+                    gameContainer.lastElementChild.classList.add("left");
+                    break;
+                case 1:
+                    gameContainer.lastElementChild.classList.add("middle");
+                    break;
+                case 2:
+                    gameContainer.lastElementChild.classList.add("right");
+                    break;
+            }
+            switch(true) {
+                case (i<=2):
+                    gameContainer.lastElementChild.classList.add("top");
+                    break;
+                case (i<=5 && i>2):
+                    gameContainer.lastElementChild.classList.add("center");
+                    break;
+                case (i<=8 && i>5):
+                    gameContainer.lastElementChild.classList.add("bottom");
+                    break;
+            }
         }
     };
     const applyEvent = () => {

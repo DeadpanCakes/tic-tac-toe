@@ -1,4 +1,36 @@
+#gamecontainer {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    height: 250px;
+    width: 250px;
+}
+
 .cells {
-    height: 20px;
-    padding: 5px;
+    height: 250px;
+    width: 250px;
+}
+
+.top {
+    border-bottom: 1px solid black;
+}
+
+.center {
+    border: 1px 0 1px 0 solid black;
+}
+
+.bottom {
+    border-top: 1px solid black;
+}
+
+.left {
+    border-right: 1px solid black;
+}
+
+.middle {
+    border: 0 1px 0 1px solid black
+}
+
+.right {
+    border-left: 1px solid black;
 }
