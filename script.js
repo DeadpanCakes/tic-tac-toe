@@ -34,8 +34,10 @@ const gameBoard = (() => {
         let cellElements = document.querySelectorAll(".cells")
         for (let i = 0; i < cellElements.length; i++) {
             cellElements[i].addEventListener("click", (e) => {
-                gameProcess.getCurrentPlayer().submitMove(e.target)
-                gameProcess.trackTurn()
+                if (e.target.textContent == "") {
+                    gameProcess.getCurrentPlayer().submitMove(e.target)
+                    gameProcess.trackTurn()
+                }
             })
         }
     }
