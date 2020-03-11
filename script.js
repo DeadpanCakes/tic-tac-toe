@@ -33,8 +33,10 @@ const gameBoard = (() => {
     const applyEvent = () => {
         let cellElements = document.querySelectorAll(".cells")
         for (let i = 0; i < cellElements.length; i++) {
-            cellElements[i].addEventListener("click", (e) => currentPlayer.submitMove(e));
-            // cellElements[i].addEventListener("click", (e) => console.log(gameProcess.getTest()));
+            cellElements[i].addEventListener("click", (e) => {
+                gameProcess.getCurrentPlayer().submitMove(e.target)
+                gameProcess.trackTurn()
+            })
         }
     }
     const getBoard = () => board
@@ -42,31 +44,35 @@ const gameBoard = (() => {
 })();
 
 const gameProcess = (() => {
-    // let test = "test"
+    const playerList = [];
+    let currentPlayer
     const init = () => {
+        playerList.push(players(prompt(), "O"))
+        playerList.push(players(prompt(), "X"))
+        gameProcess.trackTurn()
         gameBoard.fillBoard();
         gameBoard.renderCell();
         gameBoard.applyEvent();
     }
-    // const changeTest = (str) => test = str;
-    // const getTest = () => test
     let turn = 0;
     const trackTurn = () => {
+        console.log(turn)
         turn++
-        if (turn%2>1) {
-            currentPlayer = playerList[0]
+        if ((turn%2)>0) {
+            changeCurrentPlayer(0)
+            console.log(currentPlayer)
         } else {
-            currentPlayer = playerList[1]
+            changeCurrentPlayer(1)
+            console.log(currentPlayer)
         }
     }
-    const receiveMove = () => {
-
-    }
+    const getCurrentPlayer = () => currentPlayer
+    const changeCurrentPlayer = (num) => currentPlayer = playerList[num]
     const checkMove = () => {
 
     }
     const announceResults = () => {
 
     }
-    return { changeTest, getTest, init, trackTurn, receiveMove, checkMove, announceResults }
+    return { init, trackTurn, getCurrentPlayer, changeCurrentPlayer, checkMove, announceResults }
 })();
