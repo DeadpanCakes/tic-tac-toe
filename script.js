@@ -1,10 +1,11 @@
-const players = function (name, symbol) {
+const players = function (name, symbol, color) {
     const getName = () => name;
     const getSymbol = () => symbol;
+    const getPlayerColor = () => color
     const submitMove = function (location) {
         return location.textContent = getSymbol();
     }
-    return { getName, getSymbol, submitMove }
+    return { getName, getSymbol, getPlayerColor, submitMove }
 }
 
 const cells = (id) => {
@@ -59,6 +60,7 @@ const gameBoard = (() => {
             cellElements[i].addEventListener("click", (e) => {
                 if ((e.target.textContent == "") && (victory.getVictor() === "")) {
                     gameProcess.getCurrentPlayer().submitMove(e.target)
+                    e.target.style.color = gameProcess.getCurrentPlayer().getPlayerColor()
                     gameProcess.checkMove(e.target)
                     gameProcess.trackTurn()
                 }
@@ -111,9 +113,23 @@ const victory = (() => {
 const gameProcess = (() => {
     const playerList = [];
     let currentPlayer
+    let oColor = "#c96480"
+    let xColor = "#99d17b"
+    const getColor = (playerNum) => {
+        switch(playerNum){
+            case 0: {
+                return oColor;
+                break;
+            }
+            case 1: {
+                return xColor;
+                break;
+            }
+        }
+    }
     const init = () => {
-        playerList.push(players(prompt(), "O"))
-        playerList.push(players(prompt(), "X"))
+        playerList.push(players(prompt(), "O", getColor(0)))
+        playerList.push(players(prompt(), "X", getColor(1)))
         gameProcess.trackTurn()
         gameBoard.fillBoard();
         gameBoard.renderCell();
@@ -194,5 +210,5 @@ const gameProcess = (() => {
         const banner = document.getElementById("banner")
         banner.textContent = player + " wins!"
     }
-    return { init, trackTurn, getCurrentPlayer, changeCurrentPlayer, checkMove, announceResults }
+    return { getColor, init, trackTurn, getCurrentPlayer, changeCurrentPlayer, checkMove, announceResults }
 })();

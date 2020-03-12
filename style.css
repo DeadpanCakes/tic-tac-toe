@@ -1,3 +1,7 @@
+* {
+    background-color: #b1ae91;
+}
+
 #gamecontainer {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -17,30 +21,30 @@
 }
 
 .top {
-    border-bottom: 1px solid black;
+    border-bottom: 2px solid #b47978;
     align-self: bottom;
 }
 
 .center {
-    border: 1px 0 1px 0 solid black;
+    border: 2px 0 2px 0 solid #b47978;
 }
 
 .bottom {
-    border-top: 1px solid black;
+    border-top: 2px solid #b47978;
     align-self: start;
 }
 
 .left {
-    border-right: 1px solid black;
+    border-right: 2px solid #b47978;
     justify-self: end;
 }
 
 .middle {
-    border: 0 1px 0 1px solid black
+    border: 0 2px 0 2px solid #b47978;
 }
 
 .right {
-    border-left: 1px solid black;
+    border-left: 2px solid #b47978;
     justify-self: start;
 }
 
