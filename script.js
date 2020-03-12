@@ -183,6 +183,16 @@ const gameProcess = (() => {
                 break;
         }
     }
-    const announceResults = (player) => console.log(player + " wins!")
+    const announceResults = (player) => {
+        const makeDiv = document.createElement("DIV")
+        const makeBanner = document.createElement("H1")
+        document.body.appendChild(makeDiv)
+        const bannerContainer = document.body.lastElementChild
+        bannerContainer.id = "bannerContainer"
+        bannerContainer.appendChild(makeBanner)
+        document.body.lastElementChild.lastElementChild.id = "banner"
+        const banner = document.getElementById("banner")
+        banner.textContent = player + " wins!"
+    }
     return { init, trackTurn, getCurrentPlayer, changeCurrentPlayer, checkMove, announceResults }
 })();

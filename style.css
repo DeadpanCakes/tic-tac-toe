@@ -1,9 +1,14 @@
 #gamecontainer {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    height: 250px;
-    width: 250px;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 0px;
+    align-items: center;
+    justify-items: center;
+    justify-content: center;
+    height: 750px;
+    width: 750px;
+    margin: auto;
 }
 
 .cells {
@@ -13,6 +18,7 @@
 
 .top {
     border-bottom: 1px solid black;
+    align-self: bottom;
 }
 
 .center {
@@ -21,10 +27,12 @@
 
 .bottom {
     border-top: 1px solid black;
+    align-self: start;
 }
 
 .left {
     border-right: 1px solid black;
+    justify-self: end;
 }
 
 .middle {
@@ -33,4 +41,15 @@
 
 .right {
     border-left: 1px solid black;
+    justify-self: start;
+}
+
+#bannerContainer {
+    width: 100%;
+    text-align: center;
+}
+
+#banner {
+    display: inline-block;
+    text-align: center;
 }
