@@ -18,6 +18,17 @@ const cells = (id) => {
 
 const gameBoard = (() => {
     const board = [];
+    const applySetupEvent = (() => {
+        const btn = document.querySelectorAll("BUTTON")
+        btn.forEach(element => element.addEventListener("click", e => gameBoard.setup(e.target.textContent)))
+    })()
+    const setup = (playerCount) => {
+        if (playerCount === "1 Player") {
+            console.log("Can't do that yet")
+        } else {
+            gameProcess.init();
+        }
+    }
     const cellElement = document.createElement("DIV");
     const gameContainer = document.getElementById("gameContainer")
     const fillBoard = () => {
@@ -54,7 +65,7 @@ const gameBoard = (() => {
             }
         }
     };
-    const applyEvent = () => {
+    const applyMoveEvent = () => {
         let cellElements = document.querySelectorAll(".cells")
         for (let i = 0; i < cellElements.length; i++) {
             cellElements[i].addEventListener("click", (e) => {
@@ -68,7 +79,7 @@ const gameBoard = (() => {
         }
     }
     const getBoard = () => board
-    return { fillBoard, renderCell, applyEvent, getBoard }
+    return { setup, fillBoard, renderCell, applyMoveEvent, getBoard }
 })();
 
 const victory = (() => {
@@ -115,6 +126,7 @@ const gameProcess = (() => {
     let currentPlayer
     let oColor = "#c96480"
     let xColor = "#99d17b"
+    let turn = 0;
     const getColor = (playerNum) => {
         switch(playerNum){
             case 0: {
@@ -128,14 +140,13 @@ const gameProcess = (() => {
         }
     }
     const init = () => {
-        playerList.push(players(prompt(), "O", getColor(0)))
-        playerList.push(players(prompt(), "X", getColor(1)))
+        playerList.push(players(prompt("input player 1 name"), "O", getColor(0)))
+        playerList.push(players(prompt("input player 2 name"), "X", getColor(1)))
         gameProcess.trackTurn()
         gameBoard.fillBoard();
         gameBoard.renderCell();
-        gameBoard.applyEvent();
+        gameBoard.applyMoveEvent();
     }
-    let turn = 0;
     const trackTurn = () => {
         turn++
         if ((turn % 2) > 0) {
