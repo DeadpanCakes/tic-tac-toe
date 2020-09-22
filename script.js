@@ -1,3 +1,25 @@
+/*
+write an ai that can play tic tac toe with the player
+interface? already done
+input?  btn press to initialize and call the ai, btn press to determine who's what symbol, btn press to trigger ai's turn
+output? ai move printed to gameboard
+prompt the player to decide if they are X or O
+prompt the player for difficulty level; normal or hard
+normal
+whenever it is the ai's turn, generate a random number between 1-10
+    if the number is even
+        pick a random remaining square
+    else
+        use the hard ai
+hard
+If ai is O, they go first and take the center square
+    else they pick a random remaining square
+whenever the player moves, 
+    if the player is one away from victory, the ai will prioritize blocking them,
+    else, the ai will then pick any legal square which has the most remaning chances for victory,
+        if there is a tie between options, make a list of options and pick at random
+*/
+
 const players = function (name, symbol, color) {
     const getName = () => name;
     const getSymbol = () => symbol;
@@ -7,6 +29,10 @@ const players = function (name, symbol, color) {
     }
     return { getName, getSymbol, getPlayerColor, submitMove }
 }
+
+/*
+refactor cells object to encapsulate more of the cell information such as x and y coordinates, makeCellElement() as a method etc
+*/
 
 const cells = (id) => {
     let state;

@@ -17,7 +17,7 @@ h1 {
     padding: 5px;
 }
 
-#gamecontainer {
+#gameContainer {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
