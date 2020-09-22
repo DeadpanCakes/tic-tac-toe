@@ -20,6 +20,26 @@ whenever the player moves,
         if there is a tie between options, make a list of options and pick at random
 */
 
+//Write a pubsub pattern to mediate claimCell() and checkForWin(), trackTurn(), and printClaim()
+
+const publisher = (() => {
+    const subscriptions = [];
+    const getSubs = () => subscriptions;
+    const subscribe = (event, fn) => {
+        if (!subscriptions[event]) {
+            subscriptions.push(event);
+            subscriptions[event] = [];
+        }
+        subscriptions[event].push(fn);
+    }
+    const emit = (event, value) => {
+        for (let i=0;i<subscriptions[event].length;i++) {
+            subscriptions[event][i](value);
+        }
+    }
+    return {getSubs,subscribe,emit}
+})();
+
 const players = function (name, symbol, color) {
     const getName = () => name;
     const getSymbol = () => symbol;
@@ -29,10 +49,6 @@ const players = function (name, symbol, color) {
     }
     return { getName, getSymbol, getPlayerColor, submitMove }
 }
-
-/*
-refactor cells object to encapsulate more of the cell information such as x and y coordinates, makeCellElement() as a method etc
-*/
 
 const cells = (id,xCoord,yCoord) => {
     let state;
@@ -51,6 +67,7 @@ const cells = (id,xCoord,yCoord) => {
          if (state === undefined && victory.getVictor() === "" ) {
             const state = gameProcess.getCurrentPlayer().getSymbol();
             const color = gameProcess.getCurrentPlayer().getPlayerColor();
+            publisher.emit("cellClaimed", cell)
             cell.style.color = color;
             cell.textContent = state;
          }
@@ -108,30 +125,6 @@ const gameBoard = (() => {
     }
     const renderCell = () => {
         for (let i = 0; i < board.length; i++) {
-            // gameContainer.appendChild(cellElement.cloneNode());
-            // gameContainer.lastElementChild.className = "cells"
-            // gameContainer.lastElementChild.id = "cell" + i
-            // switch (i % 3) {
-            //     case 0:
-            //         gameContainer.lastElementChild.classList.add("left");
-            //         break;
-            //     case 1:
-            //         gameContainer.lastElementChild.classList.add("middle");
-            //         break;
-            //     case 2:
-            //         gameContainer.lastElementChild.classList.add("right");
-            //         break;
-            // }
-            // switch (true) {
-            //     case (i <= 2):
-            //         gameContainer.lastElementChild.classList.add("top");
-            //         break;
-            //     case (i <= 5 && i > 2):
-            //         gameContainer.lastElementChild.classList.add("center");
-            //         break;
-            //     case (i <= 8 && i > 5):
-            //         gameContainer.lastElementChild.classList.add("bottom");
-            //         break;
                 gameContainer.appendChild(makeCells.cellArr[i].makeCellElement());
         }
     };
