@@ -39,18 +39,19 @@ const cells = (id,xCoord,yCoord) => {
     const getId = () => id;
     const getState = () => state;
     const changeState = symbol => state = symbol;
-    makeCellElement = function() {
+    const makeCellElement = () => {
         const div = document.createElement("div");
         div.classList.add("cells",xCoord,yCoord);
-        //figure out how to bind this to div element
-        that = this
-        div.addEventListener("click", claimCell.bind(that));
+        div.addEventListener("click", e => {
+            claimCell(e)
+        });
         return div;
     }
-    const claimCell = cell => {
+    const claimCell = (cell) => {
          if (state === undefined && victory.getVictor() === "" ) {
-            console.log(this);
-            state = gameProcess.getCurrentPlayer().getSymbol();
+            const state = gameProcess.getCurrentPlayer().getSymbol();
+            const color = gameProcess.getCurrentPlayer().getPlayerColor();
+            cell.style.color = color;
             cell.textContent = state;
          }
     }
@@ -71,11 +72,11 @@ const makeCells = (() => {
     };
     const determineY = cellId => {
         switch (true) {
-            case (cellId <= 2):
+            case (cellId <= 3):
                 return "top";
-            case (cellId <= 5 && cellId > 2):
+            case (cellId <= 5 && cellId > 3):
                 return "center";
-            case (cellId <= 8 && cellId > 5):
+            case (cellId <= 9 && cellId > 6):
                 return "bottom";
         };
     };
@@ -107,31 +108,31 @@ const gameBoard = (() => {
     }
     const renderCell = () => {
         for (let i = 0; i < board.length; i++) {
-            gameContainer.appendChild(cellElement.cloneNode());
-            gameContainer.lastElementChild.className = "cells"
-            gameContainer.lastElementChild.id = "cell" + i
-            switch (i % 3) {
-                case 0:
-                    gameContainer.lastElementChild.classList.add("left");
-                    break;
-                case 1:
-                    gameContainer.lastElementChild.classList.add("middle");
-                    break;
-                case 2:
-                    gameContainer.lastElementChild.classList.add("right");
-                    break;
-            }
-            switch (true) {
-                case (i <= 2):
-                    gameContainer.lastElementChild.classList.add("top");
-                    break;
-                case (i <= 5 && i > 2):
-                    gameContainer.lastElementChild.classList.add("center");
-                    break;
-                case (i <= 8 && i > 5):
-                    gameContainer.lastElementChild.classList.add("bottom");
-                    break;
-            }
+            // gameContainer.appendChild(cellElement.cloneNode());
+            // gameContainer.lastElementChild.className = "cells"
+            // gameContainer.lastElementChild.id = "cell" + i
+            // switch (i % 3) {
+            //     case 0:
+            //         gameContainer.lastElementChild.classList.add("left");
+            //         break;
+            //     case 1:
+            //         gameContainer.lastElementChild.classList.add("middle");
+            //         break;
+            //     case 2:
+            //         gameContainer.lastElementChild.classList.add("right");
+            //         break;
+            // }
+            // switch (true) {
+            //     case (i <= 2):
+            //         gameContainer.lastElementChild.classList.add("top");
+            //         break;
+            //     case (i <= 5 && i > 2):
+            //         gameContainer.lastElementChild.classList.add("center");
+            //         break;
+            //     case (i <= 8 && i > 5):
+            //         gameContainer.lastElementChild.classList.add("bottom");
+            //         break;
+                gameContainer.appendChild(makeCells.cellArr[i].makeCellElement());
         }
     };
     const applyMoveEvent = () => {
