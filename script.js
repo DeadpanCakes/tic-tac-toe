@@ -34,13 +34,56 @@ const players = function (name, symbol, color) {
 refactor cells object to encapsulate more of the cell information such as x and y coordinates, makeCellElement() as a method etc
 */
 
-const cells = (id) => {
+const cells = (id,xCoord,yCoord) => {
     let state;
     const getId = () => id;
     const getState = () => state;
     const changeState = symbol => state = symbol;
-    return { getId, getState, changeState };
+    makeCellElement = function() {
+        const div = document.createElement("div");
+        div.classList.add("cells",xCoord,yCoord);
+        //figure out how to bind this to div element
+        that = this
+        div.addEventListener("click", claimCell.bind(that));
+        return div;
+    }
+    const claimCell = cell => {
+         if (state === undefined && victory.getVictor() === "" ) {
+            console.log(this);
+            state = gameProcess.getCurrentPlayer().getSymbol();
+            cell.textContent = state;
+         }
+    }
+    return { getId, getState, changeState, makeCellElement, claimCell };
 }
+
+const makeCells = (() => {
+    const cellArr = [];
+    const determineX = cellId => {
+        switch (cellId % 3) {
+            case 1:
+                return "left";
+            case 2:
+                return "middle";
+            case 0:
+                return "right";
+        };
+    };
+    const determineY = cellId => {
+        switch (true) {
+            case (cellId <= 2):
+                return "top";
+            case (cellId <= 5 && cellId > 2):
+                return "center";
+            case (cellId <= 8 && cellId > 5):
+                return "bottom";
+        };
+    };
+    for (let i=1;i<10;i++) {
+        cellArr.push(cells(i,determineX(i),determineY(i)));
+    };
+    return {cellArr}
+})();
 
 const gameBoard = (() => {
     const board = [];
