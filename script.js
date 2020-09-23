@@ -66,7 +66,7 @@ const cells = (id, xCoord, yCoord) => {
         return div;
     }
     const claimCell = function (cell) {
-        if (state === "" && victory.getVictor() === "") {
+        if (state === "" && !victory.getVictor()) {
             changeState(gameProcess.getCurrentPlayer().getSymbol());
             changeColor(gameProcess.getCurrentPlayer().getPlayerColor());
             printCell(cell)
@@ -134,21 +134,21 @@ const gameBoard = (() => {
             gameContainer.appendChild(makeCells.cellArr[i].makeCellElement());
         }
     };
-    const applyMoveEvent = () => {
-        let cellElements = document.querySelectorAll(".cells")
-        for (let i = 0; i < cellElements.length; i++) {
-            cellElements[i].addEventListener("click", (e) => {
-                if ((e.target.textContent == "") && (victory.getVictor() === "")) {
-                    //gameProcess.getCurrentPlayer().submitMove(e.target)
-                    //e.target.style.color = gameProcess.getCurrentPlayer().getPlayerColor()
-                    //gameProcess.checkMove(e.target)
-                    //gameProcess.trackTurn()
-                }
-            })
-        }
-    }
+    // const applyMoveEvent = () => {
+    //     let cellElements = document.querySelectorAll(".cells")
+    //     for (let i = 0; i < cellElements.length; i++) {
+    //         cellElements[i].addEventListener("click", (e) => {
+    //             if ((e.target.textContent == "") && (!victory.getVictor())) {
+    //                 //gameProcess.getCurrentPlayer().submitMove(e.target)
+    //                 //e.target.style.color = gameProcess.getCurrentPlayer().getPlayerColor()
+    //                 //gameProcess.checkMove(e.target)
+    //                 //gameProcess.trackTurn()
+    //             }
+    //         })
+    //     }
+    // }
     const getBoard = () => board
-    return { setup, fillBoard, renderCell, applyMoveEvent, getBoard }
+    return { setup, fillBoard, renderCell, getBoard }
 })();
 
 const victory = (() => {
@@ -162,42 +162,19 @@ const victory = (() => {
     const rightVertical = [board[2], board[5], board[8]];
     const downDiagonal = [board[0], board[4], board[8]];
     const upDiagonal = [board[6], board[4], board[2]];
-    let victor = "";
-    // const checkForWin = (arr) => {
-    //     let checkArr = []
-    //     for (let i = 0; i < arr.length; i++) {
-    //         checkArr.push(gameBoard.getBoard()[arr[i]].getState())
-    //     }
-    //     let result = ""
-    //     for (let i = 0; i<checkArr.length;i++) {
-    //         result += checkArr[i];
-    //     }
-    //     if ((result === "OOO") || (result === "XXX")) {
-    //         victor = gameProcess.getCurrentPlayer().getName();
-    //         gameProcess.announceResults(victor);
-    //     }
-    // }
+    const winConditions = [topHorizontal, centerHorizontal, bottomHorizontal, leftVertical, middleVertical, rightVertical, downDiagonal, upDiagonal];
+
+    let victor = false;
+
     const checkO = cell => cell.getState() === "O";
     const checkX = cell => cell.getState() === "X";
     const checkForWin = (arr) => {
         if (arr.every(checkO) || arr.every(checkX)) {
-            victor = gameProcess.getCurrentPlayer();
+            return victor = gameProcess.getCurrentPlayer();
         }
     }
     const getVictor = () => victor;
-    return {
-        checkO,
-        topHorizontal,
-        centerHorizontal,
-        bottomHorizontal,
-        leftVertical,
-        middleVertical,
-        rightVertical,
-        upDiagonal,
-        downDiagonal,
-        checkForWin,
-        getVictor
-    }
+    return { checkO, winConditions, checkForWin, getVictor }
 })();
 
 const gameProcess = (() => {
@@ -223,7 +200,7 @@ const gameProcess = (() => {
         playerList.push(players(prompt("input player 2 name"), "X", getColor(1)));
         gameProcess.trackTurn();
         gameBoard.renderCell();
-        gameBoard.applyMoveEvent();
+        //gameBoard.applyMoveEvent();
     }
     const trackTurn = () => {
         if (!victory.getVictor()) {
@@ -236,60 +213,15 @@ const gameProcess = (() => {
         }
     }
     const getCurrentPlayer = () => currentPlayer
-    const changeCurrentPlayer = (num) => currentPlayer = playerList[num]
-    const checkMove = (claimedCell) => {
-        console.log(claimedCell.getId())
-        //getting id of event target ("cell#"), and slicing off the number to change the corresponding cell object's state in addition to pushing the symbol to the DOM
-        let cellId = gameBoard.getBoard()[claimedCell.getId() - 1];
-        switch (cellId.getId()) {
-            case (2):
-                victory.checkForWin(victory.topHorizontal)
-                victory.checkForWin(victory.middleVertical)
-                break;
-            case (3):
-                victory.checkForWin(victory.topHorizontal)
-                victory.checkForWin(victory.rightVertical)
-                victory.checkForWin(victory.upDiagonal)
-                break;
-            case (4):
-                victory.checkForWin(victory.centerHorizontal)
-                victory.checkForWin(victory.leftVertical)
-                break;
-            case (5):
-                victory.checkForWin(victory.topHorizontal)
-                victory.checkForWin(victory.centerHorizontal)
-                victory.checkForWin(victory.bottomHorizontal)
-                victory.checkForWin(victory.leftVertical)
-                victory.checkForWin(victory.middleVertical)
-                victory.checkForWin(victory.rightVertical)
-                victory.checkForWin(victory.upDiagonal)
-                victory.checkForWin(victory.downDiagonal)
-                break;
-            case (6):
-                victory.checkForWin(victory.centerHorizontal)
-                victory.checkForWin(victory.rightVertical)
-                break;
-            case (7):
-                victory.checkForWin(victory.bottomHorizontal)
-                victory.checkForWin(victory.leftVertical)
-                victory.checkForWin(victory.upDiagonal)
-                break;
-            case (8):
-                victory.checkForWin(victory.bottomHorizontal)
-                victory.checkForWin(victory.middleVertical)
-                break;
-            case (9):
-                victory.checkForWin(victory.bottomHorizontal)
-                victory.checkForWin(victory.rightVertical)
-                victory.checkForWin(victory.downDiagonal)
-                break;
-            case (1):
-                victory.checkForWin(victory.topHorizontal)
-                victory.checkForWin(victory.leftVertical)
-                victory.checkForWin(victory.downDiagonal)
-                break;
-        }
-    }
+    const changeCurrentPlayer = (num) => currentPlayer = playerList[num];
+    const checkMove = () => {
+        for (let i = 0; i < victory.winConditions.length; i++) {
+            console.log(victory.checkForWin(victory.winConditions[i]))
+            if (victory.checkForWin(victory.winConditions[i])) {
+                console.log(true);
+            };
+        };
+    };
     publisher.subscribe("cellClaimed", checkMove);
     publisher.subscribe("cellClaimed", trackTurn);
     const announceResults = (player) => {
