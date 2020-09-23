@@ -33,11 +33,12 @@ const publisher = (() => {
         subscriptions[event].push(fn);
     }
     const emit = (event, value) => {
-        for (let i=0;i<subscriptions[event].length;i++) {
-            subscriptions[event][i](value);
-        }
+        if (subscriptions[event])
+            for (let i = 0; i < subscriptions[event].length; i++) {
+                subscriptions[event][i](value);
+            }
     }
-    return {getSubs,subscribe,emit}
+    return { getSubs, subscribe, emit }
 })();
 
 const players = function (name, symbol, color) {
@@ -50,29 +51,35 @@ const players = function (name, symbol, color) {
     return { getName, getSymbol, getPlayerColor, submitMove }
 }
 
-const cells = (id,xCoord,yCoord) => {
-    let state;
+const cells = (id, xCoord, yCoord) => {
+    let state = "";
+    let color;
     const getId = () => id;
     const getState = () => state;
+    const getColor = () => color;
     const changeState = symbol => state = symbol;
-    const makeCellElement = () => {
+    const changeColor = newColor => color = newColor
+    const makeCellElement = function () {
         const div = document.createElement("div");
-        div.classList.add("cells",xCoord,yCoord);
-        div.addEventListener("click", e => {
-            claimCell(e)
-        });
+        div.classList.add("cells", xCoord, yCoord);
+        div.addEventListener("click", () => claimCell(this));
         return div;
     }
-    const claimCell = (cell) => {
-         if (state === undefined && victory.getVictor() === "" ) {
-            const state = gameProcess.getCurrentPlayer().getSymbol();
-            const color = gameProcess.getCurrentPlayer().getPlayerColor();
+    const claimCell = function (cell) {
+        if (state === "" && victory.getVictor() === "") {
+            changeState(gameProcess.getCurrentPlayer().getSymbol());
+            changeColor(gameProcess.getCurrentPlayer().getPlayerColor());
+            printCell(cell)
             publisher.emit("cellClaimed", cell)
-            cell.style.color = color;
-            cell.textContent = state;
-         }
+        }
     }
-    return { getId, getState, changeState, makeCellElement, claimCell };
+    const printCell = function (cell) {
+        let cellNodes = document.querySelectorAll(".cells");
+        cellNodes[id - 1].style.color = color;
+        cellNodes[id - 1].textContent = state;
+        console.log(id);
+    }
+    return { getId, getState, getColor, changeState, makeCellElement, claimCell, printCell };
 }
 
 const makeCells = (() => {
@@ -97,10 +104,10 @@ const makeCells = (() => {
                 return "bottom";
         };
     };
-    for (let i=1;i<10;i++) {
-        cellArr.push(cells(i,determineX(i),determineY(i)));
+    for (let i = 1; i < 10; i++) {
+        cellArr.push(cells(i, determineX(i), determineY(i)));
     };
-    return {cellArr}
+    return { cellArr }
 })();
 
 const gameBoard = (() => {
@@ -116,16 +123,15 @@ const gameBoard = (() => {
             gameProcess.init();
         }
     }
-    const cellElement = document.createElement("DIV");
     const gameContainer = document.getElementById("gameContainer")
-    const fillBoard = () => {
+    const fillBoard = (() => {
         for (let i = 0; i < 9; i++) {
-            board.push(cells(i));
+            board.push(makeCells.cellArr[i]);
         }
-    }
+    })();
     const renderCell = () => {
         for (let i = 0; i < board.length; i++) {
-                gameContainer.appendChild(makeCells.cellArr[i].makeCellElement());
+            gameContainer.appendChild(makeCells.cellArr[i].makeCellElement());
         }
     };
     const applyMoveEvent = () => {
@@ -133,10 +139,10 @@ const gameBoard = (() => {
         for (let i = 0; i < cellElements.length; i++) {
             cellElements[i].addEventListener("click", (e) => {
                 if ((e.target.textContent == "") && (victory.getVictor() === "")) {
-                    gameProcess.getCurrentPlayer().submitMove(e.target)
-                    e.target.style.color = gameProcess.getCurrentPlayer().getPlayerColor()
-                    gameProcess.checkMove(e.target)
-                    gameProcess.trackTurn()
+                    //gameProcess.getCurrentPlayer().submitMove(e.target)
+                    //e.target.style.color = gameProcess.getCurrentPlayer().getPlayerColor()
+                    //gameProcess.checkMove(e.target)
+                    //gameProcess.trackTurn()
                 }
             })
         }
@@ -146,31 +152,41 @@ const gameBoard = (() => {
 })();
 
 const victory = (() => {
-    const topHorizontal = [0, 1, 2];
-    const centerHorizontal = [3, 4, 5];
-    const bottomHorizontal = [6, 7, 8]
-    const leftVertical = [0, 3, 6]
-    const middleVertical = [1, 4, 7]
-    const rightVertical = [2, 5, 8]
-    const downDiagonal = [0, 4, 8]
-    const upDiagonal = [6, 4, 2]
-    let victor = ""
+    //create arrs of win conditions
+    const board = gameBoard.getBoard()
+    const topHorizontal = [board[0], board[1], board[2]];
+    const centerHorizontal = [board[3], board[4], board[5]];
+    const bottomHorizontal = [board[6], board[7], board[8]];
+    const leftVertical = [board[0], board[3], board[6]];
+    const middleVertical = [board[1], board[4], board[7]];
+    const rightVertical = [board[2], board[5], board[8]];
+    const downDiagonal = [board[0], board[4], board[8]];
+    const upDiagonal = [board[6], board[4], board[2]];
+    let victor = "";
+    // const checkForWin = (arr) => {
+    //     let checkArr = []
+    //     for (let i = 0; i < arr.length; i++) {
+    //         checkArr.push(gameBoard.getBoard()[arr[i]].getState())
+    //     }
+    //     let result = ""
+    //     for (let i = 0; i<checkArr.length;i++) {
+    //         result += checkArr[i];
+    //     }
+    //     if ((result === "OOO") || (result === "XXX")) {
+    //         victor = gameProcess.getCurrentPlayer().getName();
+    //         gameProcess.announceResults(victor);
+    //     }
+    // }
+    const checkO = cell => cell.getState() === "O";
+    const checkX = cell => cell.getState() === "X";
     const checkForWin = (arr) => {
-        let checkArr = []
-        for (let i = 0; i < arr.length; i++) {
-            checkArr.push(gameBoard.getBoard()[arr[i]].getState())
-        }
-        let result = ""
-        for (let i = 0; i<checkArr.length;i++) {
-            result += checkArr[i];
-        }
-        if ((result === "OOO") || (result === "XXX")) {
-            victor = gameProcess.getCurrentPlayer().getName();
-            gameProcess.announceResults(victor);
+        if (arr.every(checkO) || arr.every(checkX)) {
+            victor = gameProcess.getCurrentPlayer();
         }
     }
     const getVictor = () => victor;
     return {
+        checkO,
         topHorizontal,
         centerHorizontal,
         bottomHorizontal,
@@ -191,7 +207,7 @@ const gameProcess = (() => {
     let xColor = "#99d17b"
     let turn = 0;
     const getColor = (playerNum) => {
-        switch(playerNum){
+        switch (playerNum) {
             case 0: {
                 return oColor;
                 break;
@@ -203,42 +219,43 @@ const gameProcess = (() => {
         }
     }
     const init = () => {
-        playerList.push(players(prompt("input player 1 name"), "O", getColor(0)))
-        playerList.push(players(prompt("input player 2 name"), "X", getColor(1)))
-        gameProcess.trackTurn()
-        gameBoard.fillBoard();
+        playerList.push(players(prompt("input player 1 name"), "O", getColor(0)));
+        playerList.push(players(prompt("input player 2 name"), "X", getColor(1)));
+        gameProcess.trackTurn();
         gameBoard.renderCell();
         gameBoard.applyMoveEvent();
     }
     const trackTurn = () => {
-        turn++
-        if ((turn % 2) > 0) {
-            changeCurrentPlayer(0)
-        } else {
-            changeCurrentPlayer(1)
+        if (!victory.getVictor()) {
+            turn++
+            if ((turn % 2) > 0) {
+                changeCurrentPlayer(0)
+            } else {
+                changeCurrentPlayer(1)
+            }
         }
     }
     const getCurrentPlayer = () => currentPlayer
     const changeCurrentPlayer = (num) => currentPlayer = playerList[num]
-    const checkMove = (location) => {
+    const checkMove = (claimedCell) => {
+        console.log(claimedCell.getId())
         //getting id of event target ("cell#"), and slicing off the number to change the corresponding cell object's state in addition to pushing the symbol to the DOM
-        let cellId = gameBoard.getBoard()[location.id.slice(-1)];
-        cellId.changeState(getCurrentPlayer().getSymbol());
-        switch (true) {
-            case (cellId.getId() === 1):
+        let cellId = gameBoard.getBoard()[claimedCell.getId() - 1];
+        switch (cellId.getId()) {
+            case (2):
                 victory.checkForWin(victory.topHorizontal)
                 victory.checkForWin(victory.middleVertical)
                 break;
-            case (cellId.getId() === 2):
+            case (3):
                 victory.checkForWin(victory.topHorizontal)
                 victory.checkForWin(victory.rightVertical)
                 victory.checkForWin(victory.upDiagonal)
                 break;
-            case (cellId.getId() === 3):
+            case (4):
                 victory.checkForWin(victory.centerHorizontal)
                 victory.checkForWin(victory.leftVertical)
                 break;
-            case (cellId.getId() === 4):
+            case (5):
                 victory.checkForWin(victory.topHorizontal)
                 victory.checkForWin(victory.centerHorizontal)
                 victory.checkForWin(victory.bottomHorizontal)
@@ -248,31 +265,33 @@ const gameProcess = (() => {
                 victory.checkForWin(victory.upDiagonal)
                 victory.checkForWin(victory.downDiagonal)
                 break;
-            case (cellId.getId() === 5):
+            case (6):
                 victory.checkForWin(victory.centerHorizontal)
                 victory.checkForWin(victory.rightVertical)
                 break;
-            case (cellId.getId() === 6):
+            case (7):
                 victory.checkForWin(victory.bottomHorizontal)
                 victory.checkForWin(victory.leftVertical)
                 victory.checkForWin(victory.upDiagonal)
                 break;
-            case (cellId.getId() === 7):
+            case (8):
                 victory.checkForWin(victory.bottomHorizontal)
                 victory.checkForWin(victory.middleVertical)
                 break;
-            case (cellId.getId() === 8):
+            case (9):
                 victory.checkForWin(victory.bottomHorizontal)
                 victory.checkForWin(victory.rightVertical)
                 victory.checkForWin(victory.downDiagonal)
                 break;
-            case (cellId.getId() === 0):
+            case (1):
                 victory.checkForWin(victory.topHorizontal)
                 victory.checkForWin(victory.leftVertical)
                 victory.checkForWin(victory.downDiagonal)
                 break;
         }
     }
+    publisher.subscribe("cellClaimed", checkMove);
+    publisher.subscribe("cellClaimed", trackTurn);
     const announceResults = (player) => {
         const makeDiv = document.createElement("DIV")
         const makeBanner = document.createElement("H1")
