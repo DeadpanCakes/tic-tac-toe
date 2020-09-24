@@ -255,6 +255,11 @@ const victory = (() => {
     let victor = false;
     const getVictor = () => victor;
 
+    const assignVictor = (player) => {
+        victor = player
+        publisher.emit("gameOver", "victory");
+    }
+
     const checkO = cell => cell.getState() === "O";
     const checkX = cell => cell.getState() === "X";
     const checkForWin = (arr) => {
@@ -262,7 +267,7 @@ const victory = (() => {
             return victor = gameProcess.getCurrentPlayer();
         }
     }
-    return { checkO, winConditions, checkForWin, getVictor }
+    return { checkO, winConditions, assignVictor, checkForWin, getVictor }
 })();
 
 const gameProcess = (() => {
@@ -287,7 +292,7 @@ const gameProcess = (() => {
     }
 
     const promptSymbol = () => prompt("Do You Want To Be X's Or O's? O's Go First!");
-    const promptDifficulty = () => prompt("What Difficulty? Normal Or Hard?")
+    const promptDifficulty = () => prompt("What Difficulty? Easy, Normal, Or Hard?")
     const playerSelection = () => {
         const playerSymbol = promptSymbol().toLocaleUpperCase();
         const comDifficulty = promptDifficulty().toLocaleUpperCase();
@@ -312,7 +317,7 @@ const gameProcess = (() => {
         if (playerCount === 1) {
             playerSelection();
             const cells = document.querySelectorAll(".cells");
-            for (let i=0;i<cells.length;i++) {
+            for (let i = 0; i < cells.length; i++) {
                 cells[i].addEventListener("click", () => {
                     if (turn <= 9) {
                         publisher.emit("comTurn")
@@ -327,37 +332,43 @@ const gameProcess = (() => {
         }
     }
     const trackTurn = () => {
-        if (!victory.getVictor()) {
-            turn++
-            if ((turn % 2) > 0) {
-                changeCurrentPlayer(0)
-            } else {
-                changeCurrentPlayer(1)
-            }
+        turn++
+        if ((turn % 2) > 0) {
+            changeCurrentPlayer(0)
+        } else {
+            changeCurrentPlayer(1)
+        }
+        if (turn > 9 && (!victory.getVictor())) {
+            publisher.emit("gameOver", "draw")
         }
     }
+
     const getCurrentPlayer = () => currentPlayer
     const changeCurrentPlayer = (num) => currentPlayer = playerList[num];
     const checkMove = () => {
         for (let i = 0; i < victory.winConditions.length; i++) {
             if (victory.checkForWin(victory.winConditions[i])) {
-                console.log(true);
+                victory.assignVictor(getCurrentPlayer().getName())
             };
         };
     };
+    const announceResults = (result) => {
+        const makeBanner = () => document.createElement("h1");
+        const header = document.getElementById("title");
+        if (result === "victory") {
+            const banner = makeBanner();
+            banner.textContent = `${victory.getVictor()} Is The Winner!`;
+            header.appendChild(banner);
+        } else if (result === "draw") {
+            const banner = makeBanner();
+            banner.textContent = "It's A Draw!!!";
+            header.appendChild(banner);
+        }
+
+    }
     publisher.subscribe("comTurn", ai.submitMove)
     publisher.subscribe("cellClaimed", checkMove);
     publisher.subscribe("cellClaimed", trackTurn);
-    const announceResults = (player) => {
-        const makeDiv = document.createElement("DIV")
-        const makeBanner = document.createElement("H1")
-        document.body.appendChild(makeDiv)
-        const bannerContainer = document.body.lastElementChild
-        bannerContainer.id = "bannerContainer"
-        bannerContainer.appendChild(makeBanner)
-        document.body.lastElementChild.lastElementChild.id = "banner"
-        const banner = document.getElementById("banner")
-        banner.textContent = player + " wins!"
-    }
-    return { getColor, init, trackTurn, getCurrentPlayer, changeCurrentPlayer, checkMove, announceResults }
+    publisher.subscribe("gameOver", announceResults)
+    return { getColor, init, trackTurn, getCurrentPlayer, checkMove, announceResults }
 })();
