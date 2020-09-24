@@ -4,6 +4,7 @@ interface? already done
 input?  btn press to initialize and call the ai, btn press to determine who's what symbol, btn press to trigger ai's turn
 output? ai move printed to gameboard
 prompt the player to decide if they are X or O
+const playerSelection = () =>  return prompt("Do You Want To Be X's Or O's? O's Go First")
 prompt the player for difficulty level; normal or hard
 normal
 whenever it is the ai's turn, generate a random number between 1-10
@@ -15,12 +16,103 @@ hard
 If ai is O, they go first and take the center square
     else they pick a random remaining square
 whenever the player moves, 
-    if the player is one away from victory, the ai will prioritize blocking them,
+    if the com is one move away from victory,
+        find which winconditions have been claimed by 
+        make that move
+    else, if the player is one away from victory,
+        prioritize blocking them,
     else, the ai will then pick any legal square which has the most remaning chances for victory,
-        if there is a tie between options, make a list of options and pick at random
+        start by looking for any lines with one comClaimed space, and two empty,
+            check the two empty ones,
+                else if one has none claimed, claim that one
+                else claim the remaining
+                    if there is a tie between options, make a list of options and pick at random
 */
 
 //Write a pubsub pattern to mediate claimCell() and checkForWin(), trackTurn(), and printClaim()
+
+const promptSymbol = () => prompt("Do You Want To Be X's Or O's? O's Go First!");
+const promptDifficulty = () => prompt("What Difficulty? Normal Or Hard?")
+const playerSelection = () => {
+    const playerSymbol = promptSymbol().toLocaleUpperCase();
+    const comDifficulty = promptDifficulty().toLocaleUpperCase();
+    if (playerSymbol === "X" || playerSymbol === "O") {
+        const isX = playerSymbol === "X";
+        isX ? startXGame() : startOGame();
+    }
+    if (comDifficulty === "NORMAL" || comDifficulty === "HARD") {
+        setDifficulty(comDifficulty);
+    };
+};
+const setDifficulty = difficulty => console.log(difficulty);
+const startXGame = () => console.log("X Game Started");
+const startOGame = () => console.log("O Game Started");
+
+const generateMove = (symbol) => {
+    let playerSymbol;
+    symbol === "X" ? playerSymbol = "O" : playerSymbol = "X";
+    let myConditions = findAvailableConditions(symbol);
+    let theirConditions = findAvailableConditions(playerSymbol)
+    if (!!win(myConditions,symbol)) {
+        return win(myConditions,symbol);
+    } else if (!!preventLoss(theirConditions,playerSymbol)) {
+        return preventLoss(theirConditions,playerSymbol);
+    }
+}
+
+const genRandomMove = () => {
+    let num = Math.floor(Math.random() * 9)
+    console.log(num)
+    if (gameBoard.getBoard()[num].getState() === "") {
+        return gameBoard.getBoard()[num];
+    } else {
+        return genRandomMove();
+    }
+}
+
+const win = (condition,symbol) => {
+    for (let i=0;i<condition.length;i++) {
+        if (!!findWinningMove(condition[i], symbol)) {
+            return findWinningMove(condition[i], symbol);
+        }
+    }
+}
+
+const preventLoss = (condition,symbol) => {
+    for (let i=0;i<condition.length;i++) {
+        if (!!findWinningMove(condition[i], symbol)) {
+            return findWinningMove(condition[i], symbol);
+        }
+    }
+}
+
+const checkForSymbol = (symbol) => {
+    const claimedConditions = [];
+    for (let i = 0; i < victory.winConditions.length; i++) {
+        if (victory.winConditions[i].some(condition => condition.getState() === symbol)) {
+            claimedConditions.push(victory.winConditions[i]);
+        }
+    }
+    return claimedConditions;
+}
+
+const findWinningMove = (arr,symbol) => {
+    for (let i=0;i<arr.length;i++) {
+        let checkedArr = arr.filter(cell => cell.getState() === symbol);
+        if (checkedArr.length >= 2){
+            return arr.filter(cell => !checkedArr.includes(cell))[0];
+        }
+    }
+}
+
+const findAvailableConditions = (symbol) => {
+    let playerSymbol
+    symbol === "X" ? playerSymbol = "O" : playerSymbol = "X";
+    let unavailableConditions = checkForSymbol(playerSymbol);
+    let availableConditions = checkForSymbol(symbol);
+    return availableConditions.filter((condition) => !unavailableConditions.includes(condition));
+}
+
 
 const publisher = (() => {
     const subscriptions = [];
@@ -77,7 +169,6 @@ const cells = (id, xCoord, yCoord) => {
         let cellNodes = document.querySelectorAll(".cells");
         cellNodes[id - 1].style.color = color;
         cellNodes[id - 1].textContent = state;
-        console.log(id);
     }
     return { getId, getState, getColor, changeState, makeCellElement, claimCell, printCell };
 }
@@ -112,6 +203,8 @@ const makeCells = (() => {
 
 const gameBoard = (() => {
     const board = [];
+    const getBoard = () => board;
+    const gameContainer = document.getElementById("gameContainer");
     const applySetupEvent = (() => {
         const btn = document.querySelectorAll("BUTTON")
         btn.forEach(element => element.addEventListener("click", e => gameBoard.setup(e.target.textContent)))
@@ -123,7 +216,6 @@ const gameBoard = (() => {
             gameProcess.init();
         }
     }
-    const gameContainer = document.getElementById("gameContainer")
     const fillBoard = (() => {
         for (let i = 0; i < 9; i++) {
             board.push(makeCells.cellArr[i]);
@@ -134,20 +226,6 @@ const gameBoard = (() => {
             gameContainer.appendChild(makeCells.cellArr[i].makeCellElement());
         }
     };
-    // const applyMoveEvent = () => {
-    //     let cellElements = document.querySelectorAll(".cells")
-    //     for (let i = 0; i < cellElements.length; i++) {
-    //         cellElements[i].addEventListener("click", (e) => {
-    //             if ((e.target.textContent == "") && (!victory.getVictor())) {
-    //                 //gameProcess.getCurrentPlayer().submitMove(e.target)
-    //                 //e.target.style.color = gameProcess.getCurrentPlayer().getPlayerColor()
-    //                 //gameProcess.checkMove(e.target)
-    //                 //gameProcess.trackTurn()
-    //             }
-    //         })
-    //     }
-    // }
-    const getBoard = () => board
     return { setup, fillBoard, renderCell, getBoard }
 })();
 
@@ -165,6 +243,7 @@ const victory = (() => {
     const winConditions = [topHorizontal, centerHorizontal, bottomHorizontal, leftVertical, middleVertical, rightVertical, downDiagonal, upDiagonal];
 
     let victor = false;
+    const getVictor = () => victor;
 
     const checkO = cell => cell.getState() === "O";
     const checkX = cell => cell.getState() === "X";
@@ -173,25 +252,22 @@ const victory = (() => {
             return victor = gameProcess.getCurrentPlayer();
         }
     }
-    const getVictor = () => victor;
     return { checkO, winConditions, checkForWin, getVictor }
 })();
 
 const gameProcess = (() => {
     const playerList = [];
-    let currentPlayer
-    let oColor = "#c96480"
-    let xColor = "#99d17b"
+    let currentPlayer;
+    let oColor = "#c96480";
+    let xColor = "#99d17b";
     let turn = 0;
     const getColor = (playerNum) => {
         switch (playerNum) {
             case 0: {
                 return oColor;
-                break;
             }
             case 1: {
                 return xColor;
-                break;
             }
         }
     }
@@ -200,7 +276,6 @@ const gameProcess = (() => {
         playerList.push(players(prompt("input player 2 name"), "X", getColor(1)));
         gameProcess.trackTurn();
         gameBoard.renderCell();
-        //gameBoard.applyMoveEvent();
     }
     const trackTurn = () => {
         if (!victory.getVictor()) {
