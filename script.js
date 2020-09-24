@@ -29,7 +29,9 @@ whenever the player moves,
                     if there is a tie between options, make a list of options and pick at random
 */
 
-//Write a pubsub pattern to mediate claimCell() and checkForWin(), trackTurn(), and printClaim()
+const setDifficulty = difficulty => console.log(difficulty);
+const startXGame = () => console.log("X Game Started");
+const startOGame = () => console.log("O Game Started");
 
 const promptSymbol = () => prompt("Do You Want To Be X's Or O's? O's Go First!");
 const promptDifficulty = () => prompt("What Difficulty? Normal Or Hard?")
@@ -44,74 +46,100 @@ const playerSelection = () => {
         setDifficulty(comDifficulty);
     };
 };
-const setDifficulty = difficulty => console.log(difficulty);
-const startXGame = () => console.log("X Game Started");
-const startOGame = () => console.log("O Game Started");
 
-const generateMove = (symbol) => {
-    let playerSymbol;
-    symbol === "X" ? playerSymbol = "O" : playerSymbol = "X";
-    let myConditions = findAvailableConditions(symbol);
-    let theirConditions = findAvailableConditions(playerSymbol)
-    if (!!win(myConditions,symbol)) {
-        return win(myConditions,symbol);
-    } else if (!!preventLoss(theirConditions,playerSymbol)) {
-        return preventLoss(theirConditions,playerSymbol);
-    }
-}
+const ai = (() => {
 
-const genRandomMove = () => {
-    let num = Math.floor(Math.random() * 9)
-    console.log(num)
-    if (gameBoard.getBoard()[num].getState() === "") {
-        return gameBoard.getBoard()[num];
-    } else {
-        return genRandomMove();
-    }
-}
-
-const win = (condition,symbol) => {
-    for (let i=0;i<condition.length;i++) {
-        if (!!findWinningMove(condition[i], symbol)) {
-            return findWinningMove(condition[i], symbol);
+    const genRandomMove = () => {
+        let num = Math.floor(Math.random() * 9);
+        if (gameBoard.getBoard()[num].getState() === "") {
+            return gameBoard.getBoard()[num].getId();
+        } else {
+            return genRandomMove();
         }
     }
-}
-
-const preventLoss = (condition,symbol) => {
-    for (let i=0;i<condition.length;i++) {
-        if (!!findWinningMove(condition[i], symbol)) {
-            return findWinningMove(condition[i], symbol);
+    const generateMove = (symbol) => {
+        let playerSymbol;
+        symbol === "X" ? playerSymbol = "O" : playerSymbol = "X";
+        let myConditions = findAvailableConditions(symbol);
+        let theirConditions = findAvailableConditions(playerSymbol)
+        if (!!win(myConditions, symbol)) {
+            return win(myConditions, symbol).getId();
+        } else if (!!preventLoss(theirConditions, playerSymbol)) {
+            return preventLoss(theirConditions, playerSymbol).getId();
+        } else {
+            const moves = findOptimalMove(symbol)
+            return moves[Math.floor(Math.random() * (moves.length -1))];
         }
     }
-}
 
-const checkForSymbol = (symbol) => {
-    const claimedConditions = [];
-    for (let i = 0; i < victory.winConditions.length; i++) {
-        if (victory.winConditions[i].some(condition => condition.getState() === symbol)) {
-            claimedConditions.push(victory.winConditions[i]);
+    const checkForSymbol = (symbol) => {
+        const claimedConditions = [];
+        for (let i = 0; i < victory.winConditions.length; i++) {
+            if (victory.winConditions[i].some(condition => condition.getState() === symbol)) {
+                claimedConditions.push(victory.winConditions[i]);
+            }
+        }
+        return claimedConditions;
+    }
+
+    const findAvailableConditions = (symbol) => {
+        let playerSymbol
+        symbol === "X" ? playerSymbol = "O" : playerSymbol = "X";
+        let unavailableConditions = checkForSymbol(playerSymbol);
+        let availableConditions = checkForSymbol(symbol);
+        return availableConditions.filter((condition) => !unavailableConditions.includes(condition));
+    }
+
+    const findWinningMove = (arr, symbol) => {
+        for (let i = 0; i < arr.length; i++) {
+            let checkedArr = arr.filter(cell => cell.getState() === symbol);
+            if (checkedArr.length >= 2) {
+                return arr.filter(cell => !checkedArr.includes(cell))[0];
+            }
         }
     }
-    return claimedConditions;
-}
 
-const findWinningMove = (arr,symbol) => {
-    for (let i=0;i<arr.length;i++) {
-        let checkedArr = arr.filter(cell => cell.getState() === symbol);
-        if (checkedArr.length >= 2){
-            return arr.filter(cell => !checkedArr.includes(cell))[0];
+    const win = (condition, symbol) => {
+        for (let i = 0; i < condition.length; i++) {
+            if (!!findWinningMove(condition[i], symbol)) {
+                return findWinningMove(condition[i], symbol);
+            }
         }
     }
-}
 
-const findAvailableConditions = (symbol) => {
-    let playerSymbol
-    symbol === "X" ? playerSymbol = "O" : playerSymbol = "X";
-    let unavailableConditions = checkForSymbol(playerSymbol);
-    let availableConditions = checkForSymbol(symbol);
-    return availableConditions.filter((condition) => !unavailableConditions.includes(condition));
-}
+    const preventLoss = (condition, symbol) => {
+        for (let i = 0; i < condition.length; i++) {
+            if (!!findWinningMove(condition[i], symbol)) {
+                return findWinningMove(condition[i], symbol);
+            }
+        }
+    }
+
+    const collateMoves = (symbol) => {
+        const availableConditions = findAvailableConditions(symbol);
+        let moves = [];
+        for (let i=0;i<availableConditions.length;i++)  {
+            moves = moves.concat(availableConditions[i]);
+        }
+        return moves;
+    }
+
+    const findOptimalMove = (symbol) => {
+        const winConditions = collateMoves(symbol);
+        let legalCells = winConditions.filter(element => element.getState() === "")
+        let legalMoves = legalCells.map(element => {
+            return element.getId()
+        }).sort((a,b) => a-b)
+        const optimalMoves = legalMoves.filter(element => legalMoves.indexOf(element) !== legalMoves.lastIndexOf(element))
+        //return optimalMoves[Math.floor(Math.random() * (optimalMoves.length - 1))];
+        if (!!optimalMoves[0]){
+            return optimalMoves
+        } else {
+            return legalMoves
+        }
+    }
+    return { genRandomMove, generateMove, findOptimalMove }
+})()
 
 
 const publisher = (() => {
@@ -137,10 +165,7 @@ const players = function (name, symbol, color) {
     const getName = () => name;
     const getSymbol = () => symbol;
     const getPlayerColor = () => color
-    const submitMove = function (location) {
-        return location.textContent = getSymbol();
-    }
-    return { getName, getSymbol, getPlayerColor, submitMove }
+    return { getName, getSymbol, getPlayerColor }
 }
 
 const cells = (id, xCoord, yCoord) => {
