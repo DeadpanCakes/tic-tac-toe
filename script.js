@@ -1,34 +1,3 @@
-/*
-write an ai that can play tic tac toe with the player
-interface? already done
-input?  btn press to initialize and call the ai, btn press to determine who's what symbol, btn press to trigger ai's turn
-output? ai move printed to gameboard
-prompt the player to decide if they are X or O
-const playerSelection = () =>  return prompt("Do You Want To Be X's Or O's? O's Go First")
-prompt the player for difficulty level; normal or hard
-normal
-whenever it is the ai's turn, generate a random number between 1-10
-    if the number is even
-        pick a random remaining square
-    else
-        use the hard ai
-hard
-If ai is O, they go first and take the center square
-    else they pick a random remaining square
-whenever the player moves, 
-    if the com is one move away from victory,
-        find which winconditions have been claimed by 
-        make that move
-    else, if the player is one away from victory,
-        prioritize blocking them,
-    else, the ai will then pick any legal square which has the most remaning chances for victory,
-        start by looking for any lines with one comClaimed space, and two empty,
-            check the two empty ones,
-                else if one has none claimed, claim that one
-                else claim the remaining
-                    if there is a tie between options, make a list of options and pick at random
-*/
-
 const ai = (() => {
 
     let difficultyMode;
@@ -70,8 +39,22 @@ const ai = (() => {
     }
 
     const submitMove = () => {
-        const id = generateMove();
-        makeCells.cellArr[id - 1].claimCell();
+        if (difficultyMode === "EASY") {
+            const id = genRandomMove();
+            makeCells.cellArr[id - 1].claimCell();
+        } else if (difficultyMode === "NORMAL") {
+            const diceRoll = (Math.random() * 10) + 1
+            if (diceRoll < 6) {
+                const id = genRandomMove();
+                makeCells.cellArr[id - 1].claimCell();
+            } else {
+                const id = generateMove();
+                makeCells.cellArr[id - 1].claimCell();
+            }
+        } else if (difficultyMode === "HARD") {
+            const id = generateMove();
+            makeCells.cellArr[id - 1].claimCell();
+        }
     }
 
     const checkForSymbol = (symbol) => {
