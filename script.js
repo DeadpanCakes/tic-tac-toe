@@ -29,25 +29,10 @@ whenever the player moves,
                     if there is a tie between options, make a list of options and pick at random
 */
 
-const setDifficulty = difficulty => console.log(difficulty);
-const startXGame = () => console.log("X Game Started");
-const startOGame = () => console.log("O Game Started");
-
-const promptSymbol = () => prompt("Do You Want To Be X's Or O's? O's Go First!");
-const promptDifficulty = () => prompt("What Difficulty? Normal Or Hard?")
-const playerSelection = () => {
-    const playerSymbol = promptSymbol().toLocaleUpperCase();
-    const comDifficulty = promptDifficulty().toLocaleUpperCase();
-    if (playerSymbol === "X" || playerSymbol === "O") {
-        const isX = playerSymbol === "X";
-        isX ? startXGame() : startOGame();
-    }
-    if (comDifficulty === "NORMAL" || comDifficulty === "HARD") {
-        setDifficulty(comDifficulty);
-    };
-};
-
 const ai = (() => {
+
+    let difficultyMode;
+    const setDifficulty = difficulty => difficultyMode = difficulty;
 
     const genRandomMove = () => {
         let num = Math.floor(Math.random() * 9);
@@ -57,19 +42,36 @@ const ai = (() => {
             return genRandomMove();
         }
     }
-    const generateMove = (symbol) => {
-        let playerSymbol;
-        symbol === "X" ? playerSymbol = "O" : playerSymbol = "X";
+
+    const claimMiddle = () => gameBoard.getBoard()[4].getId();
+
+    const generateMove = () => {
+        let symbol = gameProcess.getCurrentPlayer().getSymbol();
+        let opponentSymbol;
+        symbol === "X" ? opponentSymbol = "O" : opponentSymbol = "X";
         let myConditions = findAvailableConditions(symbol);
-        let theirConditions = findAvailableConditions(playerSymbol)
-        if (!!win(myConditions, symbol)) {
+        let theirConditions = findAvailableConditions(opponentSymbol);
+        if (gameBoard.getBoard()[4].getState() === "") {
+            return claimMiddle();
+        } else if (!checkForSymbol(symbol)[0]) {
+            const corners = [1, 3, 7, 9];
+            return corners[Math.floor(Math.random() * (corners.length - 1))]
+        } else if (!!win(myConditions, symbol)) {
             return win(myConditions, symbol).getId();
-        } else if (!!preventLoss(theirConditions, playerSymbol)) {
-            return preventLoss(theirConditions, playerSymbol).getId();
+        } else if (!!preventLoss(theirConditions, opponentSymbol)) {
+            return preventLoss(theirConditions, opponentSymbol).getId();
+        } else if (findOptimalMove(symbol)[0]) {
+            const moves = findOptimalMove(symbol);
+            const move = moves[Math.floor(Math.random() * (moves.length - 1))];
+            return move;
         } else {
-            const moves = findOptimalMove(symbol)
-            return moves[Math.floor(Math.random() * (moves.length -1))];
+            return genRandomMove();
         }
+    }
+
+    const submitMove = () => {
+        const id = generateMove();
+        makeCells.cellArr[id - 1].claimCell();
     }
 
     const checkForSymbol = (symbol) => {
@@ -118,7 +120,7 @@ const ai = (() => {
     const collateMoves = (symbol) => {
         const availableConditions = findAvailableConditions(symbol);
         let moves = [];
-        for (let i=0;i<availableConditions.length;i++)  {
+        for (let i = 0; i < availableConditions.length; i++) {
             moves = moves.concat(availableConditions[i]);
         }
         return moves;
@@ -129,16 +131,15 @@ const ai = (() => {
         let legalCells = winConditions.filter(element => element.getState() === "")
         let legalMoves = legalCells.map(element => {
             return element.getId()
-        }).sort((a,b) => a-b)
+        }).sort((a, b) => a - b)
         const optimalMoves = legalMoves.filter(element => legalMoves.indexOf(element) !== legalMoves.lastIndexOf(element))
-        //return optimalMoves[Math.floor(Math.random() * (optimalMoves.length - 1))];
-        if (!!optimalMoves[0]){
+        if (!!optimalMoves[0]) {
             return optimalMoves
         } else {
             return legalMoves
         }
     }
-    return { genRandomMove, generateMove, findOptimalMove }
+    return { setDifficulty, genRandomMove, submitMove }
 })()
 
 
@@ -156,6 +157,7 @@ const publisher = (() => {
         if (subscriptions[event])
             for (let i = 0; i < subscriptions[event].length; i++) {
                 subscriptions[event][i](value);
+                console.log("event fired")
             }
     }
     return { getSubs, subscribe, emit }
@@ -236,9 +238,9 @@ const gameBoard = (() => {
     })()
     const setup = (playerCount) => {
         if (playerCount === "1 Player") {
-            console.log("Can't do that yet")
+            gameProcess.init(1);
         } else {
-            gameProcess.init();
+            gameProcess.init(2);
         }
     }
     const fillBoard = (() => {
@@ -286,6 +288,33 @@ const gameProcess = (() => {
     let oColor = "#c96480";
     let xColor = "#99d17b";
     let turn = 0;
+
+    const startXGame = () => {
+        playerList.push(players("COM", "O", getColor(0)));
+        playerList.push(players(prompt("Input Player Name"), "X", getColor(1)));
+        gameProcess.trackTurn();
+        gameBoard.renderCell();
+        ai.submitMove();
+    }
+    const startOGame = () => {
+        playerList.push(players(prompt("Input Player Name"), "O", getColor(0)));
+        playerList.push(players("COM", "X", getColor(1)));
+        gameProcess.trackTurn();
+        gameBoard.renderCell();
+    }
+
+    const promptSymbol = () => prompt("Do You Want To Be X's Or O's? O's Go First!");
+    const promptDifficulty = () => prompt("What Difficulty? Normal Or Hard?")
+    const playerSelection = () => {
+        const playerSymbol = promptSymbol().toLocaleUpperCase();
+        const comDifficulty = promptDifficulty().toLocaleUpperCase();
+        ai.setDifficulty(comDifficulty);
+        if (playerSymbol === "X" || playerSymbol === "O") {
+            const isX = playerSymbol === "X";
+            isX ? startXGame() : startOGame();
+        };
+    };
+
     const getColor = (playerNum) => {
         switch (playerNum) {
             case 0: {
@@ -296,11 +325,23 @@ const gameProcess = (() => {
             }
         }
     }
-    const init = () => {
-        playerList.push(players(prompt("input player 1 name"), "O", getColor(0)));
-        playerList.push(players(prompt("input player 2 name"), "X", getColor(1)));
-        gameProcess.trackTurn();
-        gameBoard.renderCell();
+    const init = (playerCount) => {
+        if (playerCount === 1) {
+            playerSelection();
+            const cells = document.querySelectorAll(".cells");
+            for (let i=0;i<cells.length;i++) {
+                cells[i].addEventListener("click", () => {
+                    if (turn <= 9) {
+                        publisher.emit("comTurn")
+                    }
+                });
+            }
+        } else {
+            playerList.push(players(prompt("input player 1 name"), "O", getColor(0)));
+            playerList.push(players(prompt("input player 2 name"), "X", getColor(1)));
+            gameProcess.trackTurn();
+            gameBoard.renderCell();
+        }
     }
     const trackTurn = () => {
         if (!victory.getVictor()) {
@@ -316,12 +357,12 @@ const gameProcess = (() => {
     const changeCurrentPlayer = (num) => currentPlayer = playerList[num];
     const checkMove = () => {
         for (let i = 0; i < victory.winConditions.length; i++) {
-            console.log(victory.checkForWin(victory.winConditions[i]))
             if (victory.checkForWin(victory.winConditions[i])) {
                 console.log(true);
             };
         };
     };
+    publisher.subscribe("comTurn", ai.submitMove)
     publisher.subscribe("cellClaimed", checkMove);
     publisher.subscribe("cellClaimed", trackTurn);
     const announceResults = (player) => {
